@@ -1,0 +1,45 @@
+import rsa
+def generateKeys(): 
+    bit = int(input('dlina key: ')) # длина кода
+    name = input('name file:') # название файла
+    (publicKey, privateKey) = rsa.newkeys(bit) # создаёт pubkey и prikey
+    with open(name+'_publcKey.pem', 'wb') as p:
+        p.write(publicKey.save_pkcs1('PEM'))
+    with open(name+'_privateKey.pem', 'wb') as p:
+        p.write(privateKey.save_pkcs1('PEM'))
+
+def loadKeys():  # другой пользователь получил код и шифрует своё сообщение
+    with open(input('название файла c pubkey'), 'rb') as p:
+        publicKey = rsa.PublicKey.load_pkcs1(p.read())
+    return publicKey
+
+def pri_loadKeys(): # получаем шифр и декодируем его
+    with open(input('название файла с приват key'), 'rb') as p:
+        privateKey = rsa.PrivateKey.load_pkcs1(p.read())
+    return privateKey
+
+while True:
+    d = int(input('''выбери действие
+    1 create key pubkey и privatkey  
+    2 кодировка пароля 
+    3 раскадировать приватным key
+    4 end
+    '''))
+    if d == 1:
+        generateKeys()
+        print("ключи созданы")
+    elif d == 2:
+        massenge = input('password: ').encode('utf-8') # из текста в двоичный вид
+        pubkey = loadKeys()
+        crypto = rsa.encrypt(massenge, pubkey) # шифрование публичным ключём  сообщение
+        with open(input('файл с зашифрованным паролем который нам отправил пользователь'), 'wb') as p:
+            p.write(crypto) # запись шифра в файл
+    elif d == 3:
+        with open(input('файл с зашифрованным паролем который нам отправил пользователь'), 'rb') as p:
+            message_pri = p.read() # достаём шифр из файла
+        prikey = pri_loadKeys()
+        message_pri = rsa.decrypt(message_pri, prikey) # декодируем шифр приватным ключём
+        print(message_pri.decode('utf-8'))
+
+    elif d == 4:
+        break
